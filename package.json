@@ -1,0 +1,34 @@
+{
+  "name": "tarball-viewer",
+  "version": "0.0.0",
+  "description": "View content of tarballs without downloading them",
+  "author": "Gerald <i@gerald.top>",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=12"
+  },
+  "scripts": {
+    "postinstall": "husky install",
+    "dev": "rollup -wc rollup.conf.js",
+    "clean": "del-cli dist",
+    "build:js": "rollup -c rollup.conf.js",
+    "prebuild": "npm run ci && npm run clean",
+    "build": "npm run build:js --production",
+    "ci": "npm run lint",
+    "lint": "eslint --ext .js ."
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.13.4",
+    "@violentmonkey/dom": "^1.0.9",
+    "@violentmonkey/ui": "^0.5.2"
+  },
+  "devDependencies": {
+    "@gera2ld/plaid": "~2.2.1",
+    "@gera2ld/plaid-common-react": "~2.2.0",
+    "@gera2ld/plaid-rollup": "~2.2.0",
+    "del-cli": "^3.0.1",
+    "husky": "^5.1.1"
+  },
+  "repository": "git@github.com:intellilab/tarball-viewer.git"
+}
