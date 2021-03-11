@@ -35,15 +35,16 @@ class UrlProvider {
 class TaobaoUrlProvider extends UrlProvider {
   baseUrl = 'https://registry.npm.taobao.org';
 
-  tarballUrl(fullname, basename, version) {
-    return `${this.baseUrl}/${fullname}/download/${basename}-${version}.tgz`;
+  tarballUrl(fullname, version) {
+    return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
   }
 }
 
 // class NpmUrlProvider extends UrlProvider {
 //   baseUrl = 'https://registry.npmjs.org';
 //
-//   tarballUrl(fullname, basename, version) {
+//   tarballUrl(fullname, version) {
+//     const basename = fullname.split('/').pop();
 //     return `${this.baseUrl}/${fullname}/-/${basename}-${version}.tgz`;
 //   }
 // }
@@ -61,9 +62,8 @@ async function loadData() {
     duration: 0,
   });
   const fullname = matches[1];
-  const basename = fullname.split('/').pop();
   const version = matches[2] || await getLatestVersion(fullname);
-  const url = urlProvider.tarballUrl(fullname, basename, version);
+  const url = urlProvider.tarballUrl(fullname, version);
   items = await loadTarballByUrl(url);
   items.sort((a, b) => {
     if (a.name > b.name) return 1;
