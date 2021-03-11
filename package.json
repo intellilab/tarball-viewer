@@ -1,6 +1,6 @@
 {
   "name": "tarball-viewer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "View content of tarballs without downloading them",
   "author": "Gerald <i@gerald.top>",
   "license": "MIT",
