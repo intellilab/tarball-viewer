@@ -32,11 +32,20 @@ class UrlProvider {
   }
 }
 
-class TaobaoUrlProvider extends UrlProvider {
-  baseUrl = 'https://registry.npm.taobao.org';
+// class TaobaoUrlProvider extends UrlProvider {
+//   baseUrl = 'https://registry.npm.taobao.org';
+//
+//   tarballUrl(fullname, version) {
+//     return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
+//   }
+// }
+
+class TencentUrlProvider extends UrlProvider {
+  baseUrl = 'https://mirrors.cloud.tencent.com/npm';
 
   tarballUrl(fullname, version) {
-    return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
+    const basename = fullname.split('/').pop();
+    return `${this.baseUrl}/${fullname}/-/${basename}-${version}.tgz`;
   }
 }
 
@@ -49,7 +58,7 @@ class TaobaoUrlProvider extends UrlProvider {
 //   }
 // }
 
-const urlProvider = new TaobaoUrlProvider();
+const urlProvider = new TencentUrlProvider();
 
 async function getLatestVersion(fullname) {
   const meta = await request(urlProvider.metaUrl(fullname), { responseType: 'json' });
