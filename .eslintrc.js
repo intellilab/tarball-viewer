@@ -14,6 +14,7 @@ module.exports = {
   },
   globals: {
     VM: true,
+    GM_getValue: true,
     GM_xmlhttpRequest: true,
     GM_registerMenuCommand: true,
     pako: true,

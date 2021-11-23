@@ -1,4 +1,4 @@
-import css from './style.css';
+import style from './style.css';
 
 async function request(url, options) {
   const res = await new Promise((resolve, reject) => {
@@ -26,22 +26,12 @@ async function loadTarballByUrl(url) {
   return items;
 }
 
-class UrlProvider {
+class NpmUrlProvider {
+  baseUrl = 'https://registry.npmjs.org';
+
   metaUrl(fullname) {
     return `${this.baseUrl}/${fullname}`;
   }
-}
-
-// class TaobaoUrlProvider extends UrlProvider {
-//   baseUrl = 'https://registry.npm.taobao.org';
-//
-//   tarballUrl(fullname, version) {
-//     return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
-//   }
-// }
-
-class TencentUrlProvider extends UrlProvider {
-  baseUrl = 'https://mirrors.cloud.tencent.com/npm';
 
   tarballUrl(fullname, version) {
     const basename = fullname.split('/').pop();
@@ -49,18 +39,25 @@ class TencentUrlProvider extends UrlProvider {
   }
 }
 
-// class NpmUrlProvider extends UrlProvider {
-//   baseUrl = 'https://registry.npmjs.org';
-//
-//   tarballUrl(fullname, version) {
-//     const basename = fullname.split('/').pop();
-//     return `${this.baseUrl}/${fullname}/-/${basename}-${version}.tgz`;
-//   }
-// }
+class TaobaoUrlProvider extends NpmUrlProvider {
+  baseUrl = 'https://registry.npm.taobao.org';
 
-const urlProvider = new TencentUrlProvider();
+  tarballUrl(fullname, version) {
+    return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
+  }
+}
 
-async function getLatestVersion(fullname) {
+class TencentUrlProvider extends NpmUrlProvider {
+  baseUrl = 'https://mirrors.cloud.tencent.com/npm';
+}
+
+const providers = {
+  npm: NpmUrlProvider,
+  taobao: TaobaoUrlProvider,
+  tencent: TencentUrlProvider,
+};
+
+async function getLatestVersion(urlProvider, fullname) {
   const meta = await request(urlProvider.metaUrl(fullname), { responseType: 'json' });
   const version = meta['dist-tags'].latest;
   return version;
@@ -70,8 +67,10 @@ async function loadData() {
   const toast = VM.showToast('Loading...', {
     duration: 0,
   });
+  const Provider = providers[GM_getValue('provider')] || providers.npm;
+  const urlProvider = new Provider();
   const fullname = matches[1];
-  const version = matches[2] || await getLatestVersion(fullname);
+  const version = matches[2] || await getLatestVersion(urlProvider, fullname);
   const url = urlProvider.tarballUrl(fullname, version);
   items = await loadTarballByUrl(url);
   items.sort((a, b) => {
@@ -130,7 +129,7 @@ let panel;
 let active;
 const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([\d.]+))?$/);
 if (matches) {
-  panel = VM.getPanel({ css, shadow: true });
+  panel = VM.getPanel({ style, shadow: true });
   panel.wrapper.classList.add('wrapper');
   GM_registerMenuCommand('Explore tarball', main);
 }
