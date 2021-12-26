@@ -1,14 +1,16 @@
+
 // ==UserScript==
 // @name        Tarball viewer
 // @namespace   https://gera2ld.space/
 // @description View content of tarballs without download them.
 // @match       *://www.npmjs.com/package/*
-// @grant       GM_xmlhttpRequest
-// @grant       GM_registerMenuCommand
-// @version     0.1.1
+// @version     0.1.2
 // @author      Gerald <i@gerald.top>
-// @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@1,npm/@violentmonkey/ui@0.5
-// @require     https://cdn.jsdelivr.net/combine/npm/pako@2.0.3/dist/pako.min.js,npm/@gera2ld/tarjs@^0.1.2
+// @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@2,npm/@violentmonkey/ui@0.7
+// @require     https://cdn.jsdelivr.net/combine/npm/pako@2.0.4/dist/pako.min.js,npm/@gera2ld/tarjs@^0.1.2
+// @grant       GM_getValue
+// @grant       GM_registerMenuCommand
+// @grant       GM_xmlhttpRequest
 // ==/UserScript==
 
 (function () {
@@ -32,7 +34,7 @@ function _extends() {
   return _extends.apply(this, arguments);
 }
 
-var css_248z = "header{text-align:right}a{cursor:pointer;color:#3182ce;color:rgba(49,130,206,var(--text-opacity))}a,a:hover{--text-opacity:1}a:hover{color:#2b6cb0;color:rgba(43,108,176,var(--text-opacity))}pre{white-space:pre-wrap;padding:.5rem}.wrapper{max-width:none;top:50%;left:50%;transform:translate(-50%,-50%)}.body{display:flex;--bg-opacity:1;background-color:#fff;background-color:rgba(255,255,255,var(--bg-opacity));max-width:1024px;width:90vw;height:80vh}.left{width:40%;max-width:360px;border-right:1px solid #ddd;overflow:auto}.left ul{margin:0;padding:0}.left li{list-style-type:none;border-radius:.25rem;padding-left:.25rem;padding-right:.25rem}.left li.active{--bg-opacity:1;background-color:#bee3f8;background-color:rgba(190,227,248,var(--bg-opacity))}.right{flex:1 1 0%;overflow:auto}";
+var css_248z = "header{text-align:right}a{color:rgba(37,99,235,var(--tw-text-opacity));cursor:pointer}a,a:hover{--tw-text-opacity:1}a:hover{color:rgba(29,78,216,var(--tw-text-opacity))}pre{padding:.5rem;white-space:pre-wrap}.wrapper{left:50%;max-width:none;top:50%;transform:translate(-50%,-50%)}.body{--tw-bg-opacity:1;background-color:rgba(255,255,255,var(--tw-bg-opacity));display:flex;height:80vh;max-width:1024px;width:90vw}.left{border-right:1px solid #ddd;max-width:360px;overflow:auto;width:40%}.left ul{margin:0;padding:0}.left li{border-radius:.25rem;list-style-type:none;padding-left:.25rem;padding-right:.25rem}.left li.active{--tw-bg-opacity:1;background-color:rgba(191,219,254,var(--tw-bg-opacity))}.right{flex:1 1 0%;overflow:auto}";
 
 async function request(url, options) {
   const res = await new Promise((resolve, reject) => {
@@ -62,14 +64,23 @@ async function loadTarballByUrl(url) {
   return items;
 }
 
-class UrlProvider {
+class NpmUrlProvider {
+  constructor() {
+    this.baseUrl = 'https://registry.npmjs.org';
+  }
+
   metaUrl(fullname) {
     return `${this.baseUrl}/${fullname}`;
   }
 
+  tarballUrl(fullname, version) {
+    const basename = fullname.split('/').pop();
+    return `${this.baseUrl}/${fullname}/-/${basename}-${version}.tgz`;
+  }
+
 }
 
-class TaobaoUrlProvider extends UrlProvider {
+class TaobaoUrlProvider extends NpmUrlProvider {
   constructor(...args) {
     super(...args);
     this.baseUrl = 'https://registry.npm.taobao.org';
@@ -79,19 +90,23 @@ class TaobaoUrlProvider extends UrlProvider {
     return `${this.baseUrl}/${fullname}/download/${fullname}-${version}.tgz`;
   }
 
-} // class NpmUrlProvider extends UrlProvider {
-//   baseUrl = 'https://registry.npmjs.org';
-//
-//   tarballUrl(fullname, version) {
-//     const basename = fullname.split('/').pop();
-//     return `${this.baseUrl}/${fullname}/-/${basename}-${version}.tgz`;
-//   }
-// }
+}
 
+class TencentUrlProvider extends NpmUrlProvider {
+  constructor(...args) {
+    super(...args);
+    this.baseUrl = 'https://mirrors.cloud.tencent.com/npm';
+  }
 
-const urlProvider = new TaobaoUrlProvider();
+}
 
-async function getLatestVersion(fullname) {
+const providers = {
+  npm: NpmUrlProvider,
+  taobao: TaobaoUrlProvider,
+  tencent: TencentUrlProvider
+};
+
+async function getLatestVersion(urlProvider, fullname) {
   const meta = await request(urlProvider.metaUrl(fullname), {
     responseType: 'json'
   });
@@ -103,8 +118,10 @@ async function loadData() {
   const toast = VM.showToast('Loading...', {
     duration: 0
   });
+  const Provider = providers[GM_getValue('provider')] || providers.npm;
+  const urlProvider = new Provider();
   const fullname = matches[1];
-  const version = matches[2] || (await getLatestVersion(fullname));
+  const version = matches[2] || (await getLatestVersion(urlProvider, fullname));
   const url = urlProvider.tarballUrl(fullname, version);
   items = await loadTarballByUrl(url);
   items.sort((a, b) => {
@@ -113,23 +130,23 @@ async function loadData() {
     return 0;
   });
   toast.close();
-  panel.setContent(VM.createElement(VM.Fragment, null, VM.createElement("header", null, VM.createElement("a", {
+  panel.setContent(VM.hm(VM.Fragment, null, VM.hm("header", null, VM.hm("a", {
     onClick: handleClose,
     innerHTML: "&cross;"
-  })), VM.createElement("div", {
+  })), VM.hm("div", {
     className: "body"
-  }, VM.createElement("div", {
+  }, VM.hm("div", {
     className: "left"
-  }, VM.createElement("ul", {
+  }, VM.hm("ul", {
     ref: list => {
       panel.list = list;
     }
-  }, items.map((item, i) => VM.createElement("li", null, VM.createElement("a", {
+  }, items.map((item, i) => VM.hm("li", null, VM.hm("a", {
     "data-index": i,
     onClick: handleSelect
-  }, item.name))))), VM.createElement("div", {
+  }, item.name))))), VM.hm("div", {
     className: "right"
-  }, VM.createElement("pre", {
+  }, VM.hm("pre", {
     ref: pre => {
       panel.pre = pre;
     }
@@ -168,11 +185,11 @@ const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([\d.]+
 
 if (matches) {
   panel = VM.getPanel({
-    css: css_248z,
+    style: css_248z,
     shadow: true
   });
   panel.wrapper.classList.add('wrapper');
   GM_registerMenuCommand('Explore tarball', main);
 }
 
-}());
+})();
