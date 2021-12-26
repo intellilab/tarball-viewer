@@ -4,7 +4,7 @@
 // @namespace   https://gera2ld.space/
 // @description View content of tarballs without download them.
 // @match       *://www.npmjs.com/package/*
-// @version     0.1.2
+// @version     0.1.3
 // @author      Gerald <i@gerald.top>
 // @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@2,npm/@violentmonkey/ui@0.7
 // @require     https://cdn.jsdelivr.net/combine/npm/pako@2.0.4/dist/pako.min.js,npm/@gera2ld/tarjs@^0.1.2
@@ -51,9 +51,17 @@ async function request(url, options) {
 async function loadTarball(buffer) {
   const arr = new Uint8Array(buffer);
   const tar = pako.inflate(arr);
-  reader = new tarball.TarReader();
+  const reader = new tarball.TarReader();
   const items = await reader.readFile(new Blob([tar]));
-  return items;
+  items.sort((a, b) => {
+    if (a.name > b.name) return 1;
+    if (a.name < b.name) return -1;
+    return 0;
+  });
+  return items.map(item => ({
+    name: item.name,
+    content: reader.getTextFile(item.name)
+  }));
 }
 
 async function loadTarballByUrl(url) {
@@ -114,7 +122,7 @@ async function getLatestVersion(urlProvider, fullname) {
   return version;
 }
 
-async function loadData() {
+async function loadData(matches) {
   const toast = VM.showToast('Loading...', {
     duration: 0
   });
@@ -124,11 +132,6 @@ async function loadData() {
   const version = matches[2] || (await getLatestVersion(urlProvider, fullname));
   const url = urlProvider.tarballUrl(fullname, version);
   items = await loadTarballByUrl(url);
-  items.sort((a, b) => {
-    if (a.name > b.name) return 1;
-    if (a.name < b.name) return -1;
-    return 0;
-  });
   toast.close();
   panel.setContent(VM.hm(VM.Fragment, null, VM.hm("header", null, VM.hm("a", {
     onClick: handleClose,
@@ -154,7 +157,22 @@ async function loadData() {
 }
 
 async function main() {
-  if (!items) await loadData();
+  const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([a-z0-9.-]+))?$/);
+
+  if (!matches) {
+    VM.showToast('Package not found');
+    return;
+  }
+
+  if (!panel) {
+    panel = VM.getPanel({
+      style: css_248z,
+      shadow: true
+    });
+    panel.wrapper.classList.add('wrapper');
+  }
+
+  await loadData(matches);
   panel.show();
 }
 
@@ -170,26 +188,18 @@ function handleSelect(e) {
 
 function handleClose() {
   panel.hide();
+  active = null;
+  items = null;
 }
 
 function showContent() {
   const index = +active.dataset.index;
-  panel.pre.textContent = reader.getTextFile(items[index].name);
+  panel.pre.textContent = items[index].content;
 }
 
-let reader;
 let items;
 let panel;
 let active;
-const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([a-z0-9.-]+))?$/);
-
-if (matches) {
-  panel = VM.getPanel({
-    style: css_248z,
-    shadow: true
-  });
-  panel.wrapper.classList.add('wrapper');
-  GM_registerMenuCommand('Explore tarball', main);
-}
+GM_registerMenuCommand('Explore tarball', main);
 
 })();
