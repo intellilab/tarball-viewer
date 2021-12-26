@@ -127,7 +127,7 @@ let reader;
 let items;
 let panel;
 let active;
-const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([\d.]+))?$/);
+const matches = window.location.pathname.match(/^\/package\/(.*?)(?:\/v\/([a-z0-9.-]+))?$/);
 if (matches) {
   panel = VM.getPanel({ style, shadow: true });
   panel.wrapper.classList.add('wrapper');
