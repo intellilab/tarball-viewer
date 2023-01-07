@@ -1,26 +1,13 @@
 module.exports = {
   root: true,
-  extends: [
-    require.resolve('@gera2ld/plaid/eslint'),
-    require.resolve('@gera2ld/plaid-common-react/eslint'),
+  parser: '@typescript-eslint/parser',
+  plugins: [
+    '@typescript-eslint',
   ],
-  settings: {
-    'import/resolver': {
-      'babel-module': {},
-    },
-    react: {
-      pragma: 'VM',
-    },
-  },
-  globals: {
-    VM: true,
-    GM_getValue: true,
-    GM_xmlhttpRequest: true,
-    GM_registerMenuCommand: true,
-    pako: true,
-    tarball: true,
-  },
-  rules: {
-    'max-classes-per-file': 'off',
-  },
+  extends: [
+    'eslint:recommended',
+    'plugin:@typescript-eslint/eslint-recommended',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:prettier/recommended',
+  ],
 };

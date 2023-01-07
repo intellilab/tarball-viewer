@@ -18,7 +18,7 @@ const postcssOptions = {
 const rollupConfig = [
   {
     input: {
-      input: 'src/index.js',
+      input: 'src/index.ts',
       plugins: [
         ...getRollupPlugins({
           esm: true,
