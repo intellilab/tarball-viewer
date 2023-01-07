@@ -23,7 +23,7 @@ async function main() {
   const [, pkgName, version] = matches;
   const name = [pkgName, version].filter(Boolean).join('@');
   const qs = new URLSearchParams({
-    cwd: `npm:${name}`
+    r: `npm:${name}`
   });
   GM_openInTab(`https://webfs.gera2ld.space/#${qs}`);
 }
