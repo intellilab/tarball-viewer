@@ -2,4 +2,4 @@
 
 View content of NPM tarballs without downloading them.
 
-This is a userscript initiated from [@violentmonkey/generator-userscript](https://github.com/violentmonkey/generator-userscript).
+This project is not maintained any more, please check its successor at https://github.com/gera2ld/webfs-explorer
